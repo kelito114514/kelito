@@ -1,0 +1,304 @@
+<!-- templates/add_house.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布房源 - 二手房交易平台</title>
+    <link href="../static/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .form-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .form-section h5 {
+            color: #495057;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .required-label::after {
+            content: " *";
+            color: #dc3545;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 150px;
+            margin: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('hourse.hourse_list',page=1) }}">二手房交易平台</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('hourse.hourse_list',page=1) }}">首页</a>
+                <span class="navbar-text me-3">欢迎，{{ session.username }}</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 mb-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-house-add"></i> 发布新房源</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data" novalidate>
+                            {{ form.hidden_tag() }}
+
+                            <!-- 基本信息 -->
+                            <div class="form-section">
+                                <h5>基本信息</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="house_type" class="form-label required-label">交易类型</label>
+                                            {{ form.house_type(class="form-select") }}
+                                            {% for error in form.house_type.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="price" class="form-label required-label">价格</label>
+                                            <div class="input-group">
+                                                {{ form.price(class="form-control", type="number", step="0.1") }}
+                                                <span class="input-group-text">
+                                                    {% if form.house_type.data == '出售' %}万元{% else %}元/月{% endif %}
+                                                </span>
+                                            </div>
+                                            {% for error in form.price.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="title" class="form-label required-label">房源标题</label>
+                                    {{ form.title(class="form-control", placeholder="例如：朝阳公园旁精装两居室") }}
+                                    {% for error in form.title.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="description" class="form-label required-label">房源描述</label>
+                                    {{ form.description(class="form-control", rows="4", placeholder="详细描述房屋情况、周边环境、交通等") }}
+                                    {% for error in form.description.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- 房屋信息 -->
+                            <div class="form-section">
+                                <h5>房屋信息</h5>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="area" class="form-label required-label">面积(㎡)</label>
+                                            {{ form.area(class="form-control", type="number", step="0.1") }}
+                                            {% for error in form.area.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="bedrooms" class="form-label required-label">卧室</label>
+                                            {{ form.bedrooms(class="form-control") }}
+                                            {% for error in form.bedrooms.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="living_rooms" class="form-label required-label">客厅</label>
+                                            {{ form.living_rooms(class="form-control") }}
+                                            {% for error in form.living_rooms.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="bathrooms" class="form-label required-label">卫生间</label>
+                                            {{ form.bathrooms(class="form-control") }}
+                                            {% for error in form.bathrooms.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="orientation" class="form-label required-label">朝向</label>
+                                            {{ form.orientation(class="form-select") }}
+                                            {% for error in form.orientation.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="property_type" class="form-label required-label">物业类型</label>
+                                            {{ form.property_type(class="form-select") }}
+                                            {% for error in form.property_type.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="floor" class="form-label required-label">所在楼层</label>
+                                            {{ form.floor(class="form-control", placeholder="例如：8层") }}
+                                            {% for error in form.floor.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="decoration" class="form-label required-label">装修情况</label>
+                                            {{ form.decoration(class="form-select") }}
+                                            {% for error in form.decoration.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 位置信息 -->
+                            <div class="form-section">
+                                <h5>位置信息</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="district" class="form-label required-label">所在区域</label>
+                                            {{ form.district(class="form-select") }}
+                                            {% for error in form.district.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="address" class="form-label required-label">详细地址</label>
+                                    {{ form.address(class="form-control", placeholder="例如：朝阳区朝阳公园路8号某某小区") }}
+                                    {% for error in form.address.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- 联系信息 -->
+                            <div class="form-section">
+                                <h5>联系信息</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="contact_name" class="form-label required-label">联系人</label>
+                                            {{ form.contact_name(class="form-control") }}
+                                            {% for error in form.contact_name.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="contact_phone" class="form-label required-label">联系电话</label>
+                                            {{ form.contact_phone(class="form-control") }}
+                                            {% for error in form.contact_phone.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 图片上传 -->
+                            <div class="form-section">
+                                <h5>房源图片</h5>
+                                <div class="mb-3">
+                                    <label for="main_image" class="form-label">主图</label>
+                                    {{ form.main_image(class="form-control") }}
+                                    <div class="form-text">建议上传尺寸为 800x600 的图片</div>
+                                    {% for error in form.main_image.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="additional_images" class="form-label">附加图片</label>
+                                    {{ form.additional_images(class="form-control", multiple="multiple") }}
+                                    <div class="form-text">可多选，最多上传10张图片</div>
+                                    {% for error in form.additional_images.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- 提交按钮 -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">发布房源</button>
+                                <a href="{{ url_for('hourse.hourse_list',page=1) }}" class="btn btn-secondary me-md-2">取消</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../static/bootstrap.bundle.min.js"></script>
+    <script>
+        // 动态更新价格单位
+        document.getElementById('house_type').addEventListener('change', function() {
+            const priceLabel = this.value === '出售' ? '万元' : '元/月';
+            document.querySelector('.input-group-text').textContent = priceLabel;
+        });
+
+        // 图片预览功能
+        document.getElementById('main_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 创建预览
+                    let preview = document.getElementById('main-image-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.id = 'main-image-preview';
+                        preview.className = 'image-preview';
+                        document.getElementById('main_image').parentNode.appendChild(preview);
+                    }
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二手房交易平台</title>
+    <link href="../static/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        /* 原有的所有样式保持不变 */
+        .house-card {
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+        }
+        .house-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .price {
+            color: #ff4d4f;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .price-unit {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .badge-sale {
+            background-color: #ff4d4f;
+        }
+        .badge-rent {
+            background-color: #1890ff;
+        }
+        .filter-sidebar {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        /* 以下是修复的图片轮播样式 */
+        .house-image-container {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        /* 轮播基础样式 */
+        .carousel {
+            height: 100%;
+            width: 100%;
+        }
+
+        .carousel-inner {
+            height: 100%;
+            width: 100%;
+        }
+
+        .carousel-item {
+            height: 100%;
+            width: 100%;
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 指示器样式 */
+        .carousel-indicators {
+            position: absolute;
+            bottom: 10px;
+            margin: 0;
+            left: 0;
+            right: 0;
+            z-index: 15;
+        }
+
+        .carousel-indicators [data-bs-target] {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin: 0 4px;
+            border: none;
+            background-color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+        }
+
+        .carousel-indicators .active {
+            background-color: white;
+        }
+
+        /* 控制按钮样式 */
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 40px;
+            height: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .house-image-container:hover .carousel-control-prev,
+        .house-image-container:hover .carousel-control-next {
+            opacity: 1;
+        }
+
+        .carousel-control-prev {
+            left: 15px;
+        }
+
+        .carousel-control-next {
+            right: 15px;
+        }
+
+        /* 图片数量标签 */
+        .image-count-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            z-index: 10;
+        }
+
+        /* 房源类型标签 */
+        .house-type-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+
+        /* 单张图片样式 */
+        .single-image-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .single-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 卡片内价格和标题的布局微调 */
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-title {
+            margin-bottom: 10px;
+            line-height: 1.4;
+            height: 2.8em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏（保持不变） -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('hourse.hourse_list',page=1) }}">二手房交易平台</a>
+            <div class="navbar-nav ms-auto">
+                {% if session.user_id %}
+                    <span class="navbar-text me-3">欢迎，{{ session.username }}</span>
+                    <a class="nav-link" href="{{ url_for('users.logout') }}">退出</a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('users.login') }}">登录</a>
+                    <a class="nav-link" href="{{ url_for('users.register') }}">注册</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- 筛选侧边栏（保持不变） -->
+            <div class="col-md-3">
+                <div class="filter-sidebar">
+                    <h5>筛选条件</h5>
+                    <form method="get" action="{{ url_for('hourse.hourse_list',page=1) }}">
+                        <!-- 交易类型 -->
+                        <div class="mb-3">
+                            <label class="form-label">交易类型</label>
+                            <select name="type" class="form-select">
+                                <option value="全部" >全部</option>
+                                <option value="已出租">已出租</option>
+                                <option value="出租">出租</option>
+                            </select>
+                        </div>
+
+                        <!-- 区域 -->
+                        <div class="mb-3">
+                            <label class="form-label">区域</label>
+                            <select name="district" class="form-select">
+                                <option value="">全部区域</option>
+                                {% for district in districts %}
+                                    <option value="{{ district }}"
+                                        {% if filter_values.district == district%} selected {%endif%}>
+                                        {{ district }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- 价格范围 -->
+                        <div class="mb-3">
+                            <label class="form-label">价格范围</label>
+                            <div class="input-group mb-2">
+                                <input type="number" name="min_price" class="form-control"
+                                       placeholder="最低价" value="{{filter_values.min_price or ''}}">
+                                <span class="input-group-text">-</span>
+                                <input type="number" name="max_price" class="form-control"
+                                       placeholder="最高价" value="{{filter_values.max_price or ''}}">
+                            </div>
+                        </div>
+
+                        <!-- 面积范围 -->
+                        <div class="mb-3">
+                            <label class="form-label">面积范围 (㎡)</label>
+                            <div class="input-group mb-2">
+                                <input type="number" name="min_area" class="form-control"
+                                       placeholder="最小面积">
+                                <span class="input-group-text">-</span>
+                                <input type="number" name="max_area" class="form-control"
+                                       placeholder="最大面积" >
+                            </div>
+                        </div>
+
+                        <!-- 卧室数量 -->
+                        <div class="mb-3">
+                            <label class="form-label">卧室</label>
+                            <select name="bedrooms" class="form-select">
+                                <option value="">不限</option>
+                                <option value="1">1室</option>
+                                <option value="2" >2室</option>
+                                <option value="3">3室</option>
+                                <option value="4">4室及以上</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">筛选</button>
+                        <a href="{{ url_for('hourse.hourse_list',page=1) }}" class="btn btn-outline-secondary w-100 mt-2">重置</a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 房源列表 -->
+            <div class="col-md-9">
+                <!-- 搜索框 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <form action="{{ url_for('hourse.search') }}" method="get" class="d-flex">
+                            <input type="text" name="q" class="form-control me-2"
+                                   placeholder="搜索房源标题、位置..." value="{{ request.args.get('q', '') }}">
+                            <button type="submit" class="btn btn-outline-primary">搜索</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 房源卡片 -->
+                <div class="row">
+                    {% if hourses %}
+                        {% for house in hourses %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card house-card">
+                                <!-- 图片展示区域 - 简化版的轮播 -->
+                                <div class="house-image-container">
+                                    {% if house.image_urls|length > 1 %}
+                                        <!-- 多图轮播 - 简化版 -->
+                                        <div id="carousel-{{ house.id }}" class="carousel slide">
+                                            <!-- 指示器 -->
+                                            <div class="carousel-indicators">
+                                                {% for i in range(house.image_urls|length) %}
+                                                <button type="button"
+                                                        data-bs-target="#carousel-{{ house.id }}"
+                                                        data-bs-slide-to="{{ i }}"
+                                                        {% if i == 0 %}class="active" aria-current="true"{% endif %}
+                                                        aria-label="Slide {{ i+1 }}">
+                                                </button>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 图片容器 -->
+                                            <div class="carousel-inner">
+                                                {% for image_url in house.image_urls %}
+                                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                                    <img src="{{ image_url }}"
+                                                         class="d-block w-100"
+                                                         alt="{{ house.title }} - 图片{{ loop.index }}"
+                                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=图片加载失败'">
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 控制按钮 -->
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ house.id }}" data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">上一张</span>
+                                            </button>
+                                            <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ house.id }}" data-bs-slide="next">
+                                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">下一张</span>
+                                            </button>
+                                        </div>
+
+                                        <!-- 图片数量标签 -->
+                                        <span class="image-count-badge">
+                                            <i class="bi bi-images"></i> {{ house.image_urls|length }}
+                                        </span>
+                                    {% else %}
+                                        <!-- 只有一张图片的情况 -->
+                                        <div class="single-image-container">
+                                            <img src="{{ house.image_urls[0] if house.image_urls else 'https://via.placeholder.com/300x200?text=暂无图片' }}"
+                                                 alt="{{ house.title }}"
+                                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200?text=图片加载失败'">
+                                        </div>
+                                        <span class="image-count-badge">
+                                            <i class="bi bi-image"></i> 1
+                                        </span>
+                                    {% endif %}
+
+                                    <!-- 房源类型标签 -->
+                                    <span class="house-type-badge badge {% if house.house_type == '出售' %}bg-danger{% else %}bg-primary{% endif %}">
+                                        {{ house.house_type }}
+                                    </span>
+                                </div>
+
+                                <!-- 卡片内容（保持不变） -->
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title">{{ house.title }}</h6>
+                                        <span class="price">
+                                            {{ "%.1f"|format(house.price) }}
+                                            <span class="price-unit">
+                                                {% if house.house_type == '出售' %}万{% else %}元/月{% endif %}
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <p class="card-text text-muted small mb-3">
+                                        <i class="bi bi-geo-alt"></i> {{ house.district }} · {{ house.address[:20] }}...
+                                    </p>
+
+                                    <div class="d-flex justify-content-between text-muted small mb-3">
+                                        <span>{{ house.area }}㎡</span>
+                                        <span>{{ house.bedrooms }}室{{ house.living_rooms }}厅</span>
+                                        <span>{{ house.orientation }}</span>
+                                    </div>
+
+                                    <a href="{{ url_for('hourse.hourse_detail', house_id=house.id) }}"
+                                       class="btn btn-outline-primary btn-sm w-100">查看详情</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12 text-center py-5">
+                            <i class="bi bi-house-x display-1 text-muted"></i>
+                            <h4 class="text-muted mt-3">暂无房源</h4>
+                            <p class="text-muted">请尝试调整筛选条件</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- 分页 -->
+                {% if pagination and pagination.pages > 1 %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if pagination.has_prev %}
+                        <li class="page-item">
+                            {% if search_value %}
+                            <a class="page-link" href="{{ url_for('hourse.search', page=pagination.prev_num,q=search_value,**filter_values) }}">上一页</a>
+                            {% else %}
+                            <a class="page-link" href="{{ url_for('hourse.hourse_list', page=pagination.prev_num,**filter_values) }}">上一页</a>
+                            {% endif %}
+
+                        </li>
+                        {% endif %}
+
+                        {% for page_num in pagination.iter_pages() %}
+                            {% if page_num %}
+                                <li class="page-item {{ 'active' if page_num == pagination.page }}">
+                                    {% if search_value %}
+                                    <a class="page-link" href="{{ url_for('hourse.search', page=page_num,q=search_value,**filter_values) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                                {% else %}
+                                <a class="page-link" href="{{ url_for('hourse.hourse_list', page=page_num,**filter_values) }}">
+                                    {{ page_num }}
+                                </a>
+                                {% endif %}
+                        </li>
+                        {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if pagination.has_next %}
+                        <li class="page-item">
+                            {% if search_value %}
+                            <a class="page-link" href="{{ url_for('hourse.search', page=pagination.next_num,q=search_value,**filter_values) }}">下一页</a>
+                            {%else%}
+                            <a class="page-link" href="{{ url_for('hourse.hourse_list', page=pagination.next_num,**filter_values) }}">下一页</a>
+                            {%endif%}
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="../static/bootstrap.bundle.min.js"></script>
+
+    <!-- 简单的轮播初始化脚本 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化所有轮播
+            const carousels = document.querySelectorAll('.carousel');
+
+            carousels.forEach(carousel => {
+                // 使用Bootstrap的Carousel组件
+                const carouselInstance = new bootstrap.Carousel(carousel, {
+                    interval: 3000, // 3秒自动切换
+                    wrap: true,     // 循环播放
+                    keyboard: true, // 启用键盘控制
+                    pause: 'hover', // 鼠标悬停时暂停
+                    touch: true     // 启用触摸滑动
+                });
+
+                // 可选：添加点击图片切换功能
+                carousel.addEventListener('click', function(e) {
+                    // 如果点击的不是控制按钮或指示器
+                    if (!e.target.closest('.carousel-control-prev') &&
+                        !e.target.closest('.carousel-control-next') &&
+                        !e.target.closest('.carousel-indicators')) {
+                        carouselInstance.next();
+                    }
+                });
+            });
+
+            // 图片错误处理
+            const images = document.querySelectorAll('.carousel-item img, .single-image-container img');
+            images.forEach(img => {
+                img.addEventListener('error', function() {
+                    this.src = 'https://via.placeholder.com/300x200?text=图片加载失败';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
